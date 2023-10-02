@@ -21,12 +21,13 @@ public class Map extends JPanel{
     private final int EMPTY_DOT = 0;
     private int fieldSizeY = 3;
     private int fieldSizeX = 3;
+    private int winCount = 3;
     private char [][] field;
 
     private int paneWidth;
     private int paneHeight;
-    private int cellHeight;
-    private int cellWidth;
+    private int cellHeight = 200;
+    private int cellWidth = 200;
 
     private int gameOverType;
     private static final int STATE_DRAW = 0;
@@ -40,10 +41,16 @@ public class Map extends JPanel{
     private boolean isGameOver;
     private boolean isInitialized;
 
+    public int sizeX;
+    public int sizeY;
 
-
+    Map(int sizeX, int sizeY){
+        this.sizeX = sizeX;
+        this.sizeY = sizeY;
+    }
 
     Map(){
+        
         isInitialized = false;
         
         addMouseListener(new MouseAdapter(){
@@ -75,7 +82,7 @@ public class Map extends JPanel{
     }
 
     private boolean checkEndGame(int dot, int gameOverType) {
-        if (checkWin(dot)) {
+        if (checkWin(dot, winCount, fieldSizeX, fieldSizeY)) {
             this.gameOverType = gameOverType; 
             isGameOver = true;
             repaint();
@@ -90,7 +97,7 @@ public class Map extends JPanel{
         return false;
     }
 
-    void startNewGame(int mode, int fSzX,int fSzY, int winLen) {
+    void startNewGame(boolean mode, int fSzX,int fSzY, int winLen) {
         System.out.printf("Mode: %d; \nSize: x=%d, y=%d;\nWin Length: %d", mode, fSzX, fSzY, winLen);
         initMap();
         isGameOver = false;
@@ -149,6 +156,7 @@ public class Map extends JPanel{
                 }
             }
         }
+        if (isGameOver) showMessageGameOver(g);
 
     }
 
@@ -192,25 +200,108 @@ public class Map extends JPanel{
     }
 
     private void aiTurn() {
-        int x,y;
-        do {
-            x = RANDOM.nextInt(fieldSizeX);
-            y = RANDOM.nextInt(fieldSizeY);
-        } while (!isEmptyCell(x, y));
-        field[y][x] = AI_DOT;
+        int x, y;
+        boolean check = false;
+        for (int i = 0; i < fieldSizeX; i++){
+            if (check == true){break;}
+            for (int j = 0; j < fieldSizeY; j++){
+                if (isEmptyCell(i, j)){
+                    field[i][j] = AI_DOT;
+                    if (checkWin(AI_DOT,winCount,fieldSizeX,fieldSizeY)){
+                        check = true;
+                        break;
+                    }
+                    else {
+                        field[i][j] = EMPTY_DOT;
+                    }
+                    field[i][j] = HUMAN_DOT;
+                    if (checkWin(HUMAN_DOT,winCount,fieldSizeX,fieldSizeY)){
+                        field[i][j] = AI_DOT;
+                        check = true;
+                        break;
+                    }
+                    else{
+                        field[i][j] = EMPTY_DOT;
+                    }
+                }
+
+            }
+        }
+        if (check == false) {
+            do
+            {
+                x = RANDOM.nextInt(fieldSizeX);
+                y = RANDOM.nextInt(fieldSizeY);
+            }
+            while (!isEmptyCell(x, y));
+            field[x][y] = AI_DOT;
+        
+        }
     }
 
-    private boolean checkWin(int c) {
-        if (field[0][0]==c && field[0][1]==c && field[0][2]==c) return true;
-        if (field[1][0]==c && field[1][1]==c && field[1][2]==c) return true;
-        if (field[2][0]==c && field[2][1]==c && field[2][2]==c) return true;
+    private boolean checkWin(int c, int winCount, int fieldSizeX, int fieldSizeY ) {
+        for (int x = 0; x < fieldSizeX; x++){
+            for (int y = 0; y < fieldSizeY; y++){
+                if (!isEmptyCell(x, y) && field[x][y] == c){
+                    if (x + winCount <= fieldSizeX){
+                        for (int i = 1; i <= winCount; i++){
+                            if (i == winCount){
+                                return true;
+                            }
+                            else if (field[x + i][y] == c){
+                                continue;
+                            }
+                            else{
+                                break;
+                            }
+    
+                        }
+                    }
+                    if (y + winCount <= fieldSizeY){
+                        for (int i = 1; i <= winCount; i++){
+                            if (i == winCount){
+                                return true;
+                            }
+                            else if (field[x][y + i] == c){
+                                continue;
+                            }
+                            else{
+                                break;
+                            }
+                        }
+                    }
+                    if ((x + winCount <= fieldSizeX) && (y + winCount <= fieldSizeY)){
+                        for (int i = 1; i <= winCount; i++){
+                            if (i == winCount){
+                                return true;
+                            }
+                            else if (field[x + i][y + i] == c){
+                                continue;
+                            }
+                            else{
+                                break;
+                            }
+                        }
+                    }
+                    if ((x + winCount <= fieldSizeX) && (y - winCount + 1 >= 0)){
+                        for (int i = 1; i <= winCount; i++){
+                            if (i == winCount){
+                                return true;
+                            }
+                            else if (field[x + i][y - i] == c){
+                                continue;
+                            }
+                            else{
+                                break;
+                            }
+                        }
+                    
+                    }
+                }
+                
+            }
+        }
 
-        if (field[0][0]==c && field[1][0]==c && field[2][0]==c) return true;
-        if (field[0][1]==c && field[1][1]==c && field[2][1]==c) return true;
-        if (field[0][0]==c && field[1][1]==c && field[2][2]==c) return true;
-
-        if (field[0][0]==c && field[1][1]==c && field[2][2]==c) return true;
-        if (field[0][2]==c && field[1][1]==c && field[2][0]==c) return true;
         return false;
 
     }
